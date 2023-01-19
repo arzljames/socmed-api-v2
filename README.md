@@ -1,1 +1,1 @@
-# SocMed's API production environment
+# SocMed's API development environment
