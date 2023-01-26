@@ -32,15 +32,57 @@ exports.getUser = async (req, res) => {
               $project: {
                 password: 0,
                 friend_list: 0,
+                createdAt: 0,
+                updatedAt: 0,
               },
             },
+            {
+              $lookup: {
+                from: "profiles",
+                localField: "profile",
+                foreignField: "_id",
+                as: "profile",
+              },
+            },
+            { $unwind: "$profile" },
           ],
         },
       },
+
+      {
+        $addFields: {
+          friend_list: {
+            $map: {
+              input: "$friend_list",
+              as: "one",
+              in: {
+                $mergeObjects: [
+                  "$$one",
+                  {
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$friends",
+                          as: "two",
+                          cond: { $eq: ["$$two._id", "$$one.friend"] },
+                        },
+                      },
+                      0,
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+
       { $unwind: "$profile" },
       {
         $project: {
           password: 0,
+          friends: 0,
+          "friend_list.friend": 0,
         },
       },
     ]);

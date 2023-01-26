@@ -17,6 +17,14 @@ const PostSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
+    attachments: [
+      {
+        path: String,
+        filename: String,
+        type: String,
+      },
+    ],
   },
   { timestamps: true, versionKey: false }
 );

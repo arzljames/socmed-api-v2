@@ -157,7 +157,7 @@ exports.postReaction = async (req, res) => {
     const { reaction, reaction_icon, postId, reactor } = req.body;
 
     const createUpdateReaction = await Reaction.findOneAndUpdate(
-      { postId },
+      { postId, reactor },
       { reaction, reaction_icon, postId, reactor },
       { upsert: true, new: true }
     );
