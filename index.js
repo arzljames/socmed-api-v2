@@ -19,7 +19,7 @@ dbInit;
 app.use(express.json());
 app.use(
   cors({
-    origin: _.map(ALLOWED_ORIGINS.split(","), (item) => item),
+    origin: ['*', 'https://api-creatve.onrender.com', 'https://api-creatve.onrender.com/', true],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "*"],
   })
