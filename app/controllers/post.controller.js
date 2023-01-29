@@ -92,6 +92,44 @@ exports.getPosts = async (req, res) => {
           localField: "_id",
           foreignField: "postId",
           as: "comments",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "commentor",
+                foreignField: "_id",
+                as: "commentor",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "profiles",
+                      localField: "profile",
+                      foreignField: "_id",
+                      as: "profile",
+                    },
+                  },
+                  { $unwind: "$profile" },
+                  {
+                    $project: {
+                      "profile.createdAt": 0,
+                      "profile.updatedAt": 0,
+                    },
+                  },
+                ],
+              },
+            },
+
+            { $unwind: "$commentor" },
+            {
+              $project: {
+                "commentor.profile": 1,
+                "commentor.status": 1,
+                createdAt: 1,
+                updatedAt: 1,
+                comment: 1,
+              },
+            },
+          ],
         },
       },
       { $unwind: "$author" },
@@ -165,6 +203,26 @@ exports.postReaction = async (req, res) => {
     res.status(200).json(createUpdateReaction);
   } catch (error) {
     console.log(error);
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+exports.deleteDeletePost = async (req, res) => {
+  try {
+    // Post ID to delete
+    const { id } = req.params;
+
+    const isExisting = await Post.findOne({ _id: id });
+
+    if (!isExisting)
+      throw new Error(`Unable to find and delete Post with ID ${id}`);
+
+    await Post.deleteMany({ _id: id });
+    await Reaction.deleteMany({ postId: id });
+    await Comment.deleteMany({ postId: id });
+
+    res.status(200).json({ ok: true });
+  } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }
 };

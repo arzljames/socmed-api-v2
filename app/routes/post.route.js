@@ -14,6 +14,15 @@ router.get(
 );
 
 /**
+ * @api {DELETE} /api/post/delete-post/:id - Delete speicific post and reactions within
+ */
+router.delete(
+  "/delete-post/:id",
+  authenticationValidation.validateToken,
+  postController.deleteDeletePost
+);
+
+/**
  * @api {POST} /api/post/create - Create a post
  *
  * @param  {String} [privacy] Privacy of post (public/friends)
