@@ -1,10 +1,7 @@
 const { body } = require("express-validator");
 
 exports.validatePostBody = () => {
-  const criterias = [
-    body("privacy").notEmpty().isString(),
-    body("message").notEmpty().isString(),
-  ];
+  const criterias = [body("privacy").notEmpty().isString()];
 
   return criterias;
 };
