@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      default: "Offline",
+      default: "OFFLINE",
     },
 
     profile: {

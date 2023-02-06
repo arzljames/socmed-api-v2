@@ -6,6 +6,7 @@ const app = express();
 const authenticationRoute = require("./app/routes/authentication.route");
 const postRoute = require("./app/routes/post.route");
 const userRoute = require("./app/routes/user.route");
+const notificationRoute = require("./app/routes/notification.route");
 const cors = require("cors");
 const _ = require("lodash");
 const http = require("http");
@@ -32,6 +33,7 @@ socketInit(server);
 app.use("/api/auth", authenticationRoute);
 app.use("/api/post", postRoute);
 app.use("/api/user", userRoute);
+app.use("/api/notification", notificationRoute);
 
 server.listen(PORT, () => {
   console.log(`Running in PORT ${PORT}`);

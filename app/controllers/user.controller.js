@@ -97,10 +97,22 @@ exports.getUsers = async (req, res) => {
   try {
     const { user } = req;
     const _id = user._id;
+    const findUserRequester = await User.findOne({ _id });
+    let exemptedUsers = [mongoose.Types.ObjectId(_id)];
+
+    // you might know people aggregation
+    // this will filter users who are already friends with the requestor
+    _.map(findUserRequester?.friend_list, (user) => {
+      exemptedUsers.push(mongoose.Types.ObjectId(user.friend));
+      return exemptedUsers;
+    });
+
     let findUsers = await User.aggregate([
       {
         $match: {
-          _id: { $ne: mongoose.Types.ObjectId(_id) },
+          _id: {
+            $nin: exemptedUsers,
+          },
         },
       },
       {
