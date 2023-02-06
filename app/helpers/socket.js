@@ -1,6 +1,5 @@
 const { Server } = require("socket.io");
-const Post = require("../models/post");
-const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const socketInit = (server) => {
   const io = new Server(server, {
@@ -10,11 +9,13 @@ const socketInit = (server) => {
       methods: ["PUT", "DELETE", "GET", "POST", "*"],
     },
   });
-
   io.on("connection", (socket) => {
-    console.log(`Client with ID of ${socket.id} connected!`);
+    socket.on("client:refresh_data", async (_data) => {
+      io.emit("server:refresh_data", true);
+    });
+
     socket.on("disconnect", () => {
-      console.log("user disconnected");
+      console.log(`${socket.id} disconnected`);
     });
   });
 };

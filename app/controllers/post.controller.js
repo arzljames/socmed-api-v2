@@ -4,6 +4,7 @@ const Post = require("../models/post");
 const Comment = require("../models/comment");
 const mongoose = require("mongoose");
 const _ = require("lodash");
+const Notification = require("../models/notification");
 
 exports.postCreatePost = async (req, res) => {
   // data body validation
@@ -15,17 +16,19 @@ exports.postCreatePost = async (req, res) => {
   try {
     const { user } = req;
     const { _id } = user;
-    const { privacy, message } = req.body;
+    const { privacy, message, attachments } = req.body;
 
     const createPost = await Post.create({
       author: _id,
       message,
       privacy,
+      attachments,
     });
     if (!createPost) throw new Error("Unable to create post");
 
     res.status(200).json(createPost);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ ok: false, message: error.message });
   }
 };
@@ -47,7 +50,9 @@ exports.postRemoveReaction = async (req, res) => {
 exports.getPosts = async (req, res) => {
   try {
     const { user } = req;
-    let posts = await Post.aggregate([
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+    const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+    const findPosts = await Post.aggregate([
       {
         $match: {},
       },
@@ -162,13 +167,64 @@ exports.getPosts = async (req, res) => {
       {
         $sort: { createdAt: -1 },
       },
-    ]);
 
-    if (!posts) {
-      posts = [];
-    }
+      {
+        $facet: {
+          total: [
+            {
+              $count: "notifications",
+            },
+          ],
 
-    res.status(200).json(posts);
+          data: [
+            {
+              $addFields: {
+                _id: "$_id",
+              },
+            },
+          ],
+        },
+      },
+      { $unwind: "$total" },
+
+      {
+        $project: {
+          data: {
+            $slice: [
+              "$data",
+              skip,
+              {
+                $ifNull: [limit, "$total.notifications"],
+              },
+            ],
+          },
+          meta: {
+            total: "$total.notifications",
+            limit: {
+              $literal: limit,
+            },
+
+            page: {
+              $literal: skip / limit + 1,
+            },
+            pages: {
+              $ceil: {
+                $divide: ["$total.notifications", limit],
+              },
+            },
+          },
+        },
+      },
+    ]).then((result) => {
+      if (!result) return { data: [], meta: {} };
+
+      return {
+        data: result[0]?.data,
+        meta: result[0]?.meta,
+      };
+    });
+
+    res.status(200).json(findPosts);
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }
@@ -220,6 +276,7 @@ exports.deleteDeletePost = async (req, res) => {
     await Post.deleteMany({ _id: id });
     await Reaction.deleteMany({ postId: id });
     await Comment.deleteMany({ postId: id });
+    await Notification.deleteMany({ post_id: id });
 
     res.status(200).json({ ok: true });
   } catch (error) {
