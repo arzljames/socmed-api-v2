@@ -22,6 +22,10 @@ const PostSchema = new mongoose.Schema(
       url: { type: String, required: false },
       type: { type: String, required: false },
     },
+    edited: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true, versionKey: false }
 );

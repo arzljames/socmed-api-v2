@@ -35,3 +35,5 @@ exports.validateRegiterBody = () => {
 
   return criterias;
 };
+
+
