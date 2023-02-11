@@ -188,3 +188,21 @@ exports.undoReactNotification = async (req, res) => {
     res.status(400).json({ ok: false, message: error.message });
   }
 };
+
+exports.markReadNotification = async (req, res) => {
+  try {
+    const { notification_id } = req.params;
+
+    const markNotificationRead = await Notification.findOneAndUpdate(
+      { _id: notification_id },
+      { status: "READ" },
+      { upsert: true }
+    );
+
+    if (!markNotificationRead)
+      throw new Error("Unable to mark notification status to read");
+    res.status(200).json(markNotificationRead);
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};

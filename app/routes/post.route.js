@@ -35,6 +35,18 @@ router.post(
 );
 
 /**
+ * @api {POST} /api/post/create - Create a post
+ *
+ * @param  {String} [privacy] Privacy of post (public/friends)
+ * @param  {String} [message] Context of post
+ */
+router.put(
+  "/update/:id",
+  [authenticationValidation.validateToken, postValidation.validatePostBody()],
+  postController.updatePost
+);
+
+/**
  * @api {POST} /api/post/reaction - Add reaction to post
  *
  * @param  {Number} [reaction] Reaction id (1-5)
