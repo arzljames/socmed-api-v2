@@ -33,6 +33,39 @@ exports.postCreatePost = async (req, res) => {
   }
 };
 
+exports.updatePost = async (req, res) => {
+  // data body validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { user } = req;
+    const { _id } = user;
+    const { privacy, message, attachments } = req.body;
+    const { id } = req.params;
+
+    const updatePost = await Post.findOneAndUpdate(
+      { _id: id },
+      {
+        author: _id,
+        message,
+        privacy,
+        attachments,
+        edited: true,
+      },
+      { upsert: true, new: false }
+    );
+    if (!updatePost) throw new Error("Unable to update post");
+
+    res.status(200).json(updatePost);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
 exports.postRemoveReaction = async (req, res) => {
   try {
     const reactionId = req.params.id;
@@ -165,7 +198,7 @@ exports.getPosts = async (req, res) => {
         },
       },
       {
-        $sort: { createdAt: -1 },
+        $sort: { updatedAt: -1 },
       },
 
       {

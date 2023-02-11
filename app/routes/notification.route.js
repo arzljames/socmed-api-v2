@@ -38,4 +38,14 @@ router.delete(
   notificationController.undoReactNotification
 );
 
+/**
+ * @api {PUT} - Mark notification as read
+
+ */
+router.put(
+  "/:notification_id",
+  authenticationValidation.validateToken,
+  notificationController.markReadNotification
+);
+
 module.exports = router;
