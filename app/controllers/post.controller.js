@@ -16,13 +16,14 @@ exports.postCreatePost = async (req, res) => {
   try {
     const { user } = req;
     const { _id } = user;
-    const { privacy, message, attachments } = req.body;
+    const { privacy, message, attachments, post } = req.body;
 
     const createPost = await Post.create({
       author: _id,
       message,
       privacy,
       attachments,
+      post,
     });
     if (!createPost) throw new Error("Unable to create post");
 
@@ -118,6 +119,44 @@ exports.getPosts = async (req, res) => {
 
       {
         $lookup: {
+          from: "posts",
+          localField: "post",
+          foreignField: "_id",
+          as: "post",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
+                pipeline: [
+                  {
+                    $project: {
+                      password: 0,
+                    },
+                  },
+                  {
+                    $lookup: {
+                      from: "profiles",
+                      localField: "profile",
+                      foreignField: "_id",
+                      as: "profile",
+                    },
+                  },
+                  {
+                    $unwind: "$profile",
+                  },
+                ],
+              },
+            },
+            { $unwind: "$author" },
+          ],
+        },
+      },
+
+      {
+        $lookup: {
           from: "reactions",
           localField: "_id",
           foreignField: "postId",
@@ -162,6 +201,7 @@ exports.getPosts = async (req, res) => {
               $project: {
                 "commentor.profile": 1,
                 "commentor.status": 1,
+                "commentor._id": 1,
                 createdAt: 1,
                 updatedAt: 1,
                 comment: 1,
@@ -171,6 +211,13 @@ exports.getPosts = async (req, res) => {
         },
       },
       { $unwind: "$author" },
+      {
+        $unwind: {
+          path: "$post",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
       {
         $project: {
           "comments.postId": 0,
@@ -184,15 +231,12 @@ exports.getPosts = async (req, res) => {
               $expr: {
                 $in: [
                   new mongoose.Types.ObjectId(user._id),
-                  "$author.friend_list.friend",
+                  { $ifNull: ["$author.followers", []] },
                 ],
               },
             },
             {
               "author._id": new mongoose.Types.ObjectId(user._id),
-            },
-            {
-              privacy: "Public",
             },
           ],
         },
@@ -312,6 +356,139 @@ exports.deleteDeletePost = async (req, res) => {
     await Notification.deleteMany({ post_id: id });
 
     res.status(200).json({ ok: true });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+exports.getPost = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+
+  try {
+    const { user } = req;
+    const findPost = await Post.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          as: "author",
+          pipeline: [
+            {
+              $project: {
+                password: 0,
+              },
+            },
+            {
+              $lookup: {
+                from: "profiles",
+                localField: "profile",
+                foreignField: "_id",
+                as: "profile",
+              },
+            },
+            {
+              $unwind: "$profile",
+            },
+          ],
+        },
+      },
+
+      {
+        $lookup: {
+          from: "reactions",
+          localField: "_id",
+          foreignField: "postId",
+          as: "reactions",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "commentor",
+                foreignField: "_id",
+                as: "commentor",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "profiles",
+                      localField: "profile",
+                      foreignField: "_id",
+                      as: "profile",
+                    },
+                  },
+                  { $unwind: "$profile" },
+                  {
+                    $project: {
+                      "profile.createdAt": 0,
+                      "profile.updatedAt": 0,
+                    },
+                  },
+                ],
+              },
+            },
+
+            { $unwind: "$commentor" },
+            {
+              $project: {
+                "commentor.profile": 1,
+                "commentor.status": 1,
+                "commentor._id": 1,
+                createdAt: 1,
+                updatedAt: 1,
+                comment: 1,
+              },
+            },
+          ],
+        },
+      },
+      { $unwind: "$author" },
+      {
+        $project: {
+          "comments.postId": 0,
+          "reactions.postId": 0,
+        },
+      },
+      {
+        $match: {
+          $or: [
+            {
+              $expr: {
+                $in: [
+                  new mongoose.Types.ObjectId(user._id),
+                  "$author.followers",
+                ],
+              },
+            },
+            {
+              "author._id": new mongoose.Types.ObjectId(user._id),
+            },
+            {
+              privacy: "Public",
+            },
+          ],
+        },
+      },
+    ]).then((result) => {
+      if (!result) return {};
+
+      return result;
+    });
+
+    res.status(200).json(findPost);
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }

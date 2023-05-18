@@ -48,4 +48,25 @@ router.put(
   notificationController.markReadNotification
 );
 
+router.put(
+  "/update/mark-all-read",
+  authenticationValidation.validateToken,
+  notificationController.markAllRead
+);
+
+router.put(
+  "/:id/update",
+  [
+    authenticationValidation.validateToken,
+    notificationValidation.validateStatus(),
+  ],
+  notificationController.updateNotification
+);
+
+router.delete(
+  "/:id/delete",
+  authenticationValidation.validateToken,
+  notificationController.deleteNotification
+);
+
 module.exports = router;

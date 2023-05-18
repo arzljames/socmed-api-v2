@@ -11,3 +11,11 @@ exports.validateNotificationBody = () => {
 
   return criterias;
 };
+
+exports.validateStatus = () => {
+  const criterias = [
+    body("status").notEmpty().isString().isIn(["READ", "UNREAD"]),
+  ];
+
+  return criterias;
+};

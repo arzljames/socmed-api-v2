@@ -24,9 +24,9 @@ exports.getUser = async (req, res) => {
       {
         $lookup: {
           from: "users",
-          localField: "friend_list.friend",
+          localField: "followers",
           foreignField: "_id",
-          as: "friends",
+          as: "followers",
           pipeline: [
             {
               $project: {
@@ -49,40 +49,10 @@ exports.getUser = async (req, res) => {
         },
       },
 
-      {
-        $addFields: {
-          friend_list: {
-            $map: {
-              input: "$friend_list",
-              as: "one",
-              in: {
-                $mergeObjects: [
-                  "$$one",
-                  {
-                    $arrayElemAt: [
-                      {
-                        $filter: {
-                          input: "$friends",
-                          as: "two",
-                          cond: { $eq: ["$$two._id", "$$one.friend"] },
-                        },
-                      },
-                      0,
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-
       { $unwind: "$profile" },
       {
         $project: {
           password: 0,
-          friends: 0,
-          "friend_list.friend": 0,
         },
       },
     ]);
@@ -102,8 +72,8 @@ exports.getUsers = async (req, res) => {
 
     // you might know people aggregation
     // this will filter users who are already friends with the requestor
-    _.map(findUserRequester?.friend_list, (user) => {
-      exemptedUsers.push(mongoose.Types.ObjectId(user.friend));
+    _.map(findUserRequester?.followers, (user) => {
+      exemptedUsers.push(mongoose.Types.ObjectId(user._id));
       return exemptedUsers;
     });
 
@@ -128,7 +98,7 @@ exports.getUsers = async (req, res) => {
 
     res.status(200).json(findUsers);
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ ok: false, message: error.message });
   }
 };
 
@@ -146,6 +116,37 @@ exports.putUpdateNewUser = async (req, res) => {
     if (!findUpdatedUser) throw new Error("Unable to update user");
     res.status(200).json(findUpdatedUser);
   } catch (error) {
-    res.status(400).json(error);
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+exports.getStatus = async (req, res) => {
+  const { user } = req;
+  if (!user) throw new Error("Invalid token!");
+
+  const _id = user._id;
+
+  try {
+    const findUser = await User.findOne({ _id });
+    if (!findUser) throw new Error("Invalid user");
+    res.status(200).json(findUser.status);
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+exports.updatedStatus = async (req, res) => {
+  const { user } = req;
+  const { status } = req.body;
+  if (!user) throw new Error("Invalid token!");
+
+  const _id = user._id;
+
+  try {
+    const updateUser = await User.findOneAndUpdate({ _id }, { status });
+    if (!updateUser) throw new Error("Unable to update user");
+    res.status(200).json(updateUser.status);
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
   }
 };

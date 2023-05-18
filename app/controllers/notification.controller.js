@@ -206,3 +206,77 @@ exports.markReadNotification = async (req, res) => {
     res.status(400).json({ ok: false, message: error.message });
   }
 };
+
+exports.markAllRead = async (req, res) => {
+  try {
+    const { user } = req;
+    const { _id } = user;
+
+    const markAllNotifications = await Notification.updateMany(
+      { notify_to: _id },
+      { status: "READ" },
+      { upsert: true }
+    );
+
+    if (!markAllNotifications)
+      throw new Error("Unable to mark all notifications status to read");
+    res.status(200).json(markAllNotifications);
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+};
+
+exports.updateNotification = async (req, res) => {
+  const { id } = req.params;
+  const notification_status = req.body.notification_status;
+
+  // data body validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const updateNotification = await Notification.findOneAndUpdate(
+      { _id: id },
+      { status: notification_status },
+      { new: true }
+    );
+
+    if (!updateNotification) {
+      return res.status(400).json({
+        status: 0,
+        message: "Unable to update notification status",
+      });
+    }
+
+    res.status(200).json(updateNotification);
+  } catch (error) {
+    return res.status(400).json({
+      status: 0,
+      message: error.message,
+    });
+  }
+};
+
+exports.deleteNotification = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleteNotification = await Notification.findOneAndDelete({ _id: id });
+
+    if (!deleteNotification) {
+      return res.status(400).json({
+        status: 0,
+        message: "Unable to delete notification",
+      });
+    }
+
+    res.status(200).json({ status: 1, message: "Deleted notification" });
+  } catch (error) {
+    return res.status(400).json({
+      status: 0,
+      message: error.message,
+    });
+  }
+};
