@@ -41,13 +41,10 @@ const UserSchema = new mongoose.Schema(
       ref: Profile,
     },
 
-    friend_list: [
+    followers: [
       {
-        friend: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        friend_status: Number,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
       },
       { default: [] },
     ],

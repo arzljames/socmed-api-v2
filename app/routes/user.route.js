@@ -25,4 +25,22 @@ router.put(
   userController.putUpdateNewUser
 );
 
+/**
+ * @api {GET} /status - get current status of user
+ */
+router.get(
+  "/status",
+  authenticationValidation.validateToken,
+  userController.getStatus
+);
+
+/**
+ * @api {PUT} /status - update status of user
+ */
+router.put(
+  "/status",
+  authenticationValidation.validateToken,
+  userController.updatedStatus
+);
+
 module.exports = router;

@@ -26,6 +26,10 @@ const PostSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    post: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+    },
   },
   { timestamps: true, versionKey: false }
 );

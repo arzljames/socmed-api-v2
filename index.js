@@ -7,6 +7,8 @@ const authenticationRoute = require("./app/routes/authentication.route");
 const postRoute = require("./app/routes/post.route");
 const userRoute = require("./app/routes/user.route");
 const notificationRoute = require("./app/routes/notification.route");
+const commentRoute = require("./app/routes/comment.route");
+const searchRoute = require("./app/routes/search.route");
 const cors = require("cors");
 const _ = require("lodash");
 const http = require("http");
@@ -34,6 +36,8 @@ app.use("/api/auth", authenticationRoute);
 app.use("/api/post", postRoute);
 app.use("/api/user", userRoute);
 app.use("/api/notification", notificationRoute);
+app.use("/api/comment", commentRoute);
+app.use("/api/search", searchRoute);
 
 server.listen(PORT, () => {
   console.log(`Running in PORT ${PORT}`);

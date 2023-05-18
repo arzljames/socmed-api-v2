@@ -14,6 +14,15 @@ router.get(
 );
 
 /**
+ * @api {GET} /api/post/ - Post details
+ */
+router.get(
+  "/:id",
+  authenticationValidation.validateToken,
+  postController.getPost
+);
+
+/**
  * @api {DELETE} /api/post/delete-post/:id - Delete speicific post and reactions within
  */
 router.delete(
