@@ -5,7 +5,7 @@ const User = require("../models/user");
 const socketInit = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: "https://creatve-app.vercel.app",
       credentials: true,
       methods: ["PUT", "DELETE", "GET", "POST", "*"],
     },
